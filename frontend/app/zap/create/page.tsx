@@ -4,6 +4,7 @@ import { BACKEND_URL } from "@/app/config";
 import { Appbar } from "@/components/Appbar";
 import { Input } from "@/components/Input";
 import { ZapCell } from "@/components/ZapCell";
+import { LinkButton } from "@/components/buttons/LinkButton";
 import { PrimaryButton } from "@/components/buttons/PrimaryButton";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -27,7 +28,7 @@ function useAvailableActionsAndTriggers() {
     }
 }
 
-export default function Zap() {
+export default function() {
     const router = useRouter();
     const { availableActions, availableTriggers } = useAvailableActionsAndTriggers();
     const [selectedTrigger, setSelectedTrigger] = useState<{
@@ -51,7 +52,7 @@ export default function Zap() {
                     return;
                 }
 
-                     await axios.post(`${BACKEND_URL}/api/v1/zap`, {
+                const response = await axios.post(`${BACKEND_URL}/api/v1/zap`, {
                     "availableTriggerId": selectedTrigger.id,
                     "triggerMetadata": {},
                     "actions": selectedActions.map(a => ({
