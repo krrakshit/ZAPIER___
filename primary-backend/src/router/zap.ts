@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { authMiddleware } from "../middleware";
+import { authMiddleware } from "../midleware";
 import { ZapCreateSchema } from "../types";
 import { prismaClient } from "../db";
 
