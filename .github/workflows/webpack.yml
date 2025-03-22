@@ -1,73 +1,48 @@
-version: '3.8'
+name: Docker Compose CI
 
-services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - primary-backend
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-  primary-backend:
-    build:
-      context: ./primary-backend
-      dockerfile: Dockerfile
-    ports:
-      - "4000:4000"
-    environment:
-      - NODE_ENV=production
-    env_file:
-      - ./primary-backend/.env
-    depends_on:
-      - postgres
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-  processor:
-    build:
-      context: ./processor
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
-    env_file:
-      - ./processor/.env
-    depends_on:
-      - postgres
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: zapier
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
 
-  worker:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
-    env_file:
-      - ./worker/.env
-    depends_on:
-      - postgres
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  hooks:
-    build:
-      context: ./hooks
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
-    env_file:
-      - ./hooks/.env
-    depends_on:
-      - postgres
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=zapier
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - name: Build and run services
+        run: |
+          docker-compose -f docker-compose.yml up -d --build
 
-volumes:
-  postgres_data: 
+      - name: Run tests
+        run: |
+          docker ps
+          # Add your test commands here
+
+      - name: Shutdown services
+        run: |
+          docker-compose down
